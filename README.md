@@ -35,6 +35,8 @@ Security:
 The project is licensed under MIT, see the LICENSE for more information.
 
 ## Acknowledgements
-We would like to express our gratitude to the FIO Project and its contributors.
+We would like to express our gratitude to the
+[FIO Project](https://fio.readthedocs.io/en/latest/fio_doc.html) and its
+contributors.
 The tools and resources provided by the FIO Project have been indispensable to
 the development of this tool.
