@@ -43,19 +43,12 @@ class Coordinator:
     benchmarks.
 
     Attributes:
-        last_wave_id (str | None): Stores the last benchmark wave ID.
         worker_groups (list[str]): List of worker groups.
         filename (str): Filename to be used in benchmarking tasks.
 
     Methods:
         __schedule_every_2_hours() -> None:
             Schedules the job to run every 2 hours starting at 00:00, 02:00, etc.
-
-        get_results_from_wave_id(wave_id: str) -> dict:
-            Retrieves results of the benchmark associated with given wave ID.
-
-        __log_progress() -> None:
-            Logs the progress of the current benchmark run.
 
         trigger_benchmark() -> None:
             Triggers a new benchmark run and schedules tasks for Celery workers.
@@ -76,8 +69,6 @@ class Coordinator:
             Retrieves the filename used in benchmark tasks.
     """
 
-    # Schedule the job to run every 2 hours starting at 00:00, 02:00, 04:00, etc.
-    # FIXME: Way to configure this over CLI
     def __schedule_every_2_hours(self) -> None:
         for t in [
             "00",
@@ -95,22 +86,13 @@ class Coordinator:
         ]:
             schedule.every().day.at(f"{t}:00").do(self.trigger_benchmark)
 
-    def get_results_from_wave_id(self, wave_id: str) -> dict:
-        raise NotImplementedError
-
-    def __log_progress(self) -> None:
-        # results = self.get_results_from_wave_id(self.last_wave_id)
-        raise NotImplementedError
-
     def __init__(self) -> None:
-        self.last_wave_id: str | None = None
+        pass
 
     def trigger_benchmark(self) -> None:
         trigger_time: datetime.datetime = datetime.datetime.now()
         wave_id: str = str(uuid.uuid4())
         l.info("Triggering Benchmark")
-        self.__log_progress()
-        self.last_wave_id = wave_id
         groups: list = []
         for worker_group in self.worker_groups:
             workers: set[Any] = worker.get_workers(worker_group)
@@ -127,6 +109,7 @@ class Coordinator:
 
     def run(self) -> NoReturn:
         self.__schedule_every_2_hours()
+        l.info("Coordinator Started")
         while True:
             schedule.run_pending()
             time.sleep(1)
@@ -144,9 +127,3 @@ class Coordinator:
 
     def get_filename(self) -> str:
         return self.filename
-
-
-if __name__ == "__main__":
-    Coordinator().set_worker_groups(["Worker_A", "Worker_B"]).set_filename(
-        "full_benchmark"
-    ).run()

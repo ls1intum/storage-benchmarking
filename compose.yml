@@ -1,28 +1,26 @@
 ---
 version: '3'
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    hostname: my-rabbit
-    environment:
-      - RABBITMQ_DEFAULT_USER=user
-      - RABBITMQ_DEFAULT_PASS=password
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    restart: unless-stopped
 
-  postgres:
-    image: postgres:latest
-    environment:
-      POSTGRES_USER: fio
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: fio
-    ports:
-      - "5432:5432"
-
+  # We are setting up redis with appendfsync set to always here. This ensures
+  # maximum data durability at the cost of performance.
+  # If you require high performance you might consider setting this to everysec
+  # instead which syncs to disk every second.
   redis:
     image: redis:latest
+    command: redis-server --appendonly yes --appendfsync always
+    volumes:
+      - redis_data:/data
     ports:
       - "6379:6379"
-    restart: unless-stopped
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  redis_data:
+    driver: local

@@ -44,16 +44,6 @@ class Worker:
         app (Celery): An instance of the Celery application.
         redis_host (str | None): Redis server host.
         redis_port (str | None): Redis server port.
-        rabbitmq_host (str | None): RabbitMQ server host.
-        rabbitmq_port (str | None): RabbitMQ server port.
-        rabbitmq_username (str | None): RabbitMQ server username.
-        rabbitmq_password (str | None): RabbitMQ server password.
-        rabbitmq_vhost (str | None): RabbitMQ virtual host.
-        postgresql_host (str | None): PostgreSQL server host.
-        postgresql_port (str | None): PostgreSQL server port.
-        postgresql_username (str | None): PostgreSQL server username.
-        postgresql_password (str | None): PostgreSQL server password.
-        postgresql_database (str | None): PostgreSQL database name.
         r (redis.Redis): Redis client instance for worker registration management.
         worker_group (str | None): Group this worker belongs to.
         worker_id (str | None): ID of the worker.
@@ -79,18 +69,7 @@ class Worker:
 
         self.redis_host: str | None = os.getenv("REDIS_HOST")
         self.redis_port: str | None = os.getenv("REDIS_PORT")
-
-        self.rabbitmq_host: str | None = os.getenv("RABBITMQ_HOST")
-        self.rabbitmq_port: str | None = os.getenv("RABBITMQ_PORT")
-        self.rabbitmq_username: str | None = os.getenv("RABBITMQ_USERNAME")
-        self.rabbitmq_password: str | None = os.getenv("RABBITMQ_PASSWORD")
-        self.rabbitmq_vhost: str | None = os.getenv("RABBITMQ_VHOST")
-
-        self.postgresql_host: str | None = os.getenv("POSTGRESQL_HOST")
-        self.postgresql_port: str | None = os.getenv("POSTGRESQL_PORT")
-        self.postgresql_username: str | None = os.getenv("POSTGRESQL_USERNAME")
-        self.postgresql_password: str | None = os.getenv("POSTGRESQL_PASSWORD")
-        self.postgresql_database: str | None = os.getenv("POSTGRESQL_DATABASE")
+        self.redis_url: str = f"redis://{self.redis_host}:{self.redis_port}/0"
 
         self.r = redis.Redis(host=self.redis_host, port=self.redis_port)
 
@@ -99,18 +78,19 @@ class Worker:
 
         self.app: Celery = Celery(
             "fio",
-            broker=f"amqp://{self.rabbitmq_username}:{self.rabbitmq_password}"
-            + f"@{self.rabbitmq_host}:{self.rabbitmq_port}/{self.rabbitmq_vhost}",
-            backend="db+postgresql://"
-            + f"{self.postgresql_username}:{self.postgresql_password}"
-            + f"@{self.postgresql_host}/{self.postgresql_database}",
+            broker=self.redis_url,
+            backend=self.redis_url,
+        )
+
+        self.app.conf.update(
+            result_expires=None,  # This will ensure that results won't expire
         )
 
     def register_worker(self, worker_group: str, worker_id: str) -> Self:
         self.worker_id = worker_id
         self.worker_group = worker_group
 
-        self.r.sadd(self.worker_group, self.worker_id)
+        self.r.sadd(f"workers_{self.worker_group}", self.worker_id)
 
         print(f"Registered worker {self.worker_id} for group {self.worker_group}")
 
@@ -120,6 +100,7 @@ class Worker:
         if self.worker_id is None:
             raise ValueError("worker_id must be set before starting the worker")
         self.app.worker_main(["worker", "--loglevel=info", "-E", "-Q", self.worker_id])
+        self.__del__()  # pylint: disable=unnecessary-dunder-call
 
     def __del__(self) -> None:
         if self.worker_group is not None and self.worker_id is not None:
@@ -131,7 +112,7 @@ class Worker:
             pass
 
     def get_workers(self, worker_group: str) -> set[Any]:
-        return self.r.smembers(worker_group)  # type: ignore[return-value]
+        return self.r.smembers(f"workers_{worker_group}")  # type: ignore[return-value]
 
 
 worker = Worker()
