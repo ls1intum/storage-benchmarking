@@ -131,6 +131,30 @@ that:
 docker run --rm -it -v /my-conf.ini:$(pwd)/my-conf.ini ghcr.io/ls1intum/storage-benchmarking run -d /tmp -c /my-conf.ini
 ```
 
+## Installation
+To run the project locally clone it first:
+```sh
+git clone https://github.com/ls1intum/storage-benchmarking
+cd storage-benchmarking
+```
+
+Then install the dependencies using [Poetry](https://python-poetry.org/)
+(you can install poetry with pip: `pip install poetry`).
+```sh
+poetry install --no-dev
+```
+
+Make sure you have fio installed and in your `PATH`;
+```sh
+$ fio -v
+fio-3.37
+```
+
+Then you can run the project as described in the Usage section with
+```sh
+poetry run python3 src/benchmarking_tool/main.py
+```
+
 ## License
 The project is licensed under MIT, see the LICENSE for more information.
 
