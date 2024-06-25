@@ -239,6 +239,15 @@ class FioResult:
             json.dump(self.result, f)
         return self
 
+    def get_json(self) -> str:
+        """
+        Export the FIO result as a JSON string.
+
+        Returns:
+            str: JSON string of the report
+        """
+        return json.dumps(self.result)
+
 
 class FioConfig:
     """

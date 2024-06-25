@@ -65,6 +65,9 @@ parser = argparse.ArgumentParser(
 )
 subparsers = parser.add_subparsers(dest="role", help="Role of the execution")
 
+################################################################################
+# Run Parameters
+################################################################################
 parser_run: argparse.ArgumentParser = subparsers.add_parser(
     "run", help="Single run options"
 )
@@ -83,7 +86,20 @@ parser_run.add_argument(
     required=False,
     default=None,
 )
+parser_run.add_argument(
+    "--print-report", help="Prints the report JSON to stdout", action="store_true"
+)
+parser_run.add_argument(
+    "--export",
+    help="Export the report JSON to a file",
+    type=str,
+    required=False,
+    default="",
+)
 
+################################################################################
+# Worker Parameters
+################################################################################
 parser_worker: argparse.ArgumentParser = subparsers.add_parser(
     "worker", help="Worker node options"
 )
@@ -101,6 +117,9 @@ parser_worker.add_argument(
     type=str,
 )
 
+################################################################################
+# Coordinator Parameters
+################################################################################
 parser_coordinator: argparse.ArgumentParser = subparsers.add_parser(
     "coordinator", help="Coordinator node options"
 )
@@ -127,13 +146,14 @@ if __name__ == "__main__":
         parser.print_help()
 
     if args.role == "run":
-        # TODO: Give option to specify config files
         fio = Fio()
-        config = args.config if args.config is not None else "job_files/default.ini"
-        config = FioConfig(config)
-        config.print_job_runtime()
-        res: FioResult = fio.run(config, args.directory)
-        res.print_table()
+        config_str: str = args.config or "job_files/default.ini"
+        config: FioConfig = FioConfig(config_str).print_job_runtime()
+        res: FioResult = fio.run(config, args.directory).print_table()
+        if args.print_report:
+            print(res.get_json())
+        if args.export != "":
+            res.export_json(args.export)
 
     if args.role == "worker":
         if args.hostname is None:
@@ -141,4 +161,6 @@ if __name__ == "__main__":
         worker.register_worker(args.group, args.hostname).start_worker()
 
     if args.role == "coordinator":
-        Coordinator().set_worker_groups(args.groups).set_filename(args.filename).run()
+        Coordinator().set_worker_groups(args.groups).set_filename(
+            args.filename
+        ).trigger_benchmark()
