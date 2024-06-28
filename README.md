@@ -15,11 +15,8 @@ operations in containerized environments.
 
 ### Non-Functional Requirements
 Usability:
-- The benchmarking tool must be fully containerized using Docker.
-- Users should be able to pull the Docker image from a public Docker repository.
-- The tool must include a Docker Compose file.
-- The tool should provide a user-friendly interface for configuring and starting benchmarks.
-- The tool should provide easy to understand output for the benchmarking results
+- The tool should provide a command line interface for configuring and starting benchmarks.
+- The tool should provide simplified output for the single-run benchmarking results
 - Users should be able to start the benchmarking tool with a single command.
 
 Reliability:
@@ -30,6 +27,11 @@ Performance:
 
 Security:
 - The communication between the worker nodes and the coordinator must be encrypted.
+
+Constraints:
+- The benchmarking tool must be fully containerized using Docker.
+- Users should be able to pull the Docker image from a public Docker repository.
+- The tool must include a Docker Compose file.
 
 ## Usage
 
