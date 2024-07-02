@@ -23,11 +23,14 @@ Classes:
 
 import os
 import socket
+from datetime import datetime
 from typing import Any, Self
 
 import redis
 from celery import Celery
 from dotenv import load_dotenv
+
+from benchmarking_tool.fio import Fio, FioConfig, FioResult
 
 
 class Worker:
@@ -124,8 +127,17 @@ hostname: str = socket.gethostname()
 
 
 @worker.app.task(name="celery_app.run_benchmark")
-# def run_benchmark(filename: str, wave_id: str, timestamp: datetime.datetime) -> dict:
-def run_benchmark() -> dict:
-    raise NotImplementedError
-    # TODO: Add worker id group@host
-    # return {"status": "Passed", "test": [1, 2, 3, 4]}
+def run_benchmark(filename: str, wave_id: str, timestamp: datetime) -> dict:
+    fio = Fio()
+    config: FioConfig = FioConfig(filename)
+    res: FioResult = fio.run(config, worker.worker_directory or "/tmp")
+    return {
+        "status": "Passed",
+        "worker_id": worker.worker_id,
+        "worker_group": worker.worker_group,
+        "hostname": hostname,
+        "wave_id": wave_id,
+        "timestamp": timestamp,
+        "filename": filename,
+        "result": res.get_json(),
+    }
