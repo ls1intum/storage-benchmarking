@@ -75,6 +75,7 @@ class Worker:
 
         self.worker_group: str | None = None
         self.worker_id: str | None = None
+        self.worker_directory: str | None = None
 
         self.app: Celery = Celery(
             "fio",
@@ -86,9 +87,12 @@ class Worker:
             result_expires=None,  # This will ensure that results won't expire
         )
 
-    def register_worker(self, worker_group: str, worker_id: str) -> Self:
+    def register_worker(
+        self, worker_group: str, worker_id: str, worker_directory: str
+    ) -> Self:
         self.worker_id = worker_id
         self.worker_group = worker_group
+        self.worker_directory = worker_directory
 
         self.r.sadd(f"workers_{self.worker_group}", self.worker_id)
 
@@ -97,7 +101,7 @@ class Worker:
         return self
 
     def start_worker(self) -> None:
-        if self.worker_id is None:
+        if self.worker_id is None or self.worker_directory is None:
             raise ValueError("worker_id must be set before starting the worker")
         self.app.worker_main(["worker", "--loglevel=info", "-E", "-Q", self.worker_id])
         self.__del__()  # pylint: disable=unnecessary-dunder-call

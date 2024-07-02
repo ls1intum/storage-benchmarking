@@ -116,6 +116,13 @@ parser_worker.add_argument(
     required=True,
     type=str,
 )
+parser_worker.add_argument(
+    "-d",
+    "--directory",
+    help="Selects the directory that is to perform the benchmark on",
+    type=str,
+    required=True,
+)
 
 ################################################################################
 # Coordinator Parameters
@@ -158,7 +165,7 @@ if __name__ == "__main__":
     if args.role == "worker":
         if args.hostname is None:
             args.hostname = hostname
-        worker.register_worker(args.group, args.hostname).start_worker()
+        worker.register_worker(args.group, args.hostname, args.directory).start_worker()
 
     if args.role == "coordinator":
         Coordinator().set_worker_groups(args.groups).set_filename(
