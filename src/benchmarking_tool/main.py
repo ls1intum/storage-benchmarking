@@ -146,6 +146,12 @@ parser_coordinator.add_argument(
     type=str,
     required=True,
 )
+parser_coordinator.add_argument(
+    "-t",
+    "--trigger",
+    help="Trigger a Job immediately and then exit. Useful for testing",
+    action="store_true",
+)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -168,6 +174,10 @@ if __name__ == "__main__":
         worker.register_worker(args.group, args.hostname, args.directory).start_worker()
 
     if args.role == "coordinator":
-        Coordinator().set_worker_groups(args.groups).set_filename(
-            args.filename
-        ).trigger_benchmark()
+        coordinator = (
+            Coordinator().set_worker_groups(args.groups).set_filename(args.filename)
+        )
+        if args.trigger:
+            coordinator.trigger_benchmark()
+        else:
+            coordinator.run()
