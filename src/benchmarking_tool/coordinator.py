@@ -93,9 +93,9 @@ class Coordinator:
         trigger_time: datetime.datetime = datetime.datetime.now()
         wave_id: str = str(uuid.uuid4())
         l.info("Triggering Benchmark")
-        groups: list = []
-        for worker_group in self.worker_groups:
-            for filename in self.filenames:
+        for filename in self.filenames:
+            groups: list = []
+            for worker_group in self.worker_groups:
                 workers: set[Any] = worker.get_workers(worker_group)
                 grouped_tasks = group(
                     run_benchmark.s(
@@ -105,8 +105,8 @@ class Coordinator:
                 )
                 groups.append(grouped_tasks)
 
-        chained_tasks = chain(*groups)
-        chained_tasks.apply_async()
+            chained_tasks = chain(*groups)
+            chained_tasks.apply_async()
 
     def run(self) -> NoReturn:
         self.__schedule_every_2_hours()
