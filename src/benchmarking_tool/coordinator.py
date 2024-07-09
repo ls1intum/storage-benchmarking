@@ -95,14 +95,15 @@ class Coordinator:
         l.info("Triggering Benchmark")
         groups: list = []
         for worker_group in self.worker_groups:
-            workers: set[Any] = worker.get_workers(worker_group)
-            grouped_tasks = group(
-                run_benchmark.s(
-                    filename=self.filename, wave_id=wave_id, timestamp=trigger_time
-                ).set(queue=worker.decode())
-                for worker in workers
-            )
-            groups.append(grouped_tasks)
+            for filename in self.filenames:
+                workers: set[Any] = worker.get_workers(worker_group)
+                grouped_tasks = group(
+                    run_benchmark.s(
+                        filename=filename, wave_id=wave_id, timestamp=trigger_time
+                    ).set(queue=worker.decode())
+                    for worker in workers
+                )
+                groups.append(grouped_tasks)
 
         chained_tasks = chain(*groups)
         chained_tasks.apply_async()
@@ -121,9 +122,9 @@ class Coordinator:
     def get_worker_groups(self) -> list[str]:
         return self.worker_groups
 
-    def set_filename(self, filename: str) -> Self:
-        self.filename: str = filename
+    def set_filenames(self, filenames: list[str]) -> Self:
+        self.filenames: list[str] = filenames
         return self
 
-    def get_filename(self) -> str:
-        return self.filename
+    def get_filenames(self) -> list[str]:
+        return self.filenames

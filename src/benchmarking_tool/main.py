@@ -30,7 +30,7 @@ Registers and starts a worker node.
 ### Coordinator Role
 Coordinates worker nodes to perform distributed benchmarks.
 - `-g`/`--groups` (str, required): Groups of workers to trigger sequentially.
-- `-f`/`--filename` (str, required): Filename of the FIO benchmark job,
+- `-f`/`--filenames` (str, required): Filenames of the FIO benchmark jobs,
   located in the job_files folder of the workers.
 
 Usage:
@@ -140,9 +140,10 @@ parser_coordinator.add_argument(
 )
 parser_coordinator.add_argument(
     "-f",
-    "--filename",
-    help="Filename of the fio benchmark job. "
+    "--filenames",
+    help="Filenames of the fio benchmark job. "
     + "Must be defined in the job_files folder of the workers",
+    nargs="+",
     type=str,
     required=True,
 )
@@ -175,7 +176,7 @@ if __name__ == "__main__":
 
     if args.role == "coordinator":
         coordinator = (
-            Coordinator().set_worker_groups(args.groups).set_filename(args.filename)
+            Coordinator().set_worker_groups(args.groups).set_filenames(args.filenames)
         )
         if args.trigger:
             coordinator.trigger_benchmark()
