@@ -88,6 +88,7 @@ class Worker:
 
         self.app.conf.update(
             result_expires=None,  # This will ensure that results won't expire
+            broker_connection_retry_on_startup=True,
         )
 
     def register_worker(
