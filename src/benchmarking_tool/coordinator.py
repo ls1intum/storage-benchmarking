@@ -97,7 +97,6 @@ class Coordinator:
             workers: set[Any] = worker.get_workers(worker_group)
             for worker_instance in workers:
                 queue_name = worker_instance.decode()
-                print(f"Queue: {queue_name}, Worker: {worker}, Filename: {filename}")
                 task = (
                     run_benchmark.s(
                         filename=filename, wave_id=wave_id, timestamp=trigger_time
