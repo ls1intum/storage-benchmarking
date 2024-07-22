@@ -153,12 +153,6 @@ parser_coordinator.add_argument(
     help="Trigger a Job immediately and then exit. Useful for testing",
     action="store_true",
 )
-parser_coordinator.add_argument(
-    "-w",
-    "--wait",
-    help="Wait for all Jobs to finish before exiting.",
-    action="store_true",
-)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -185,9 +179,7 @@ if __name__ == "__main__":
             Coordinator().set_worker_groups(args.groups).set_filenames(args.filenames)
         )
         if args.trigger:
-            all_results: list = coordinator.trigger_benchmark()
-            if args.wait:
-                for result in all_results:
-                    result.get()
+            coordinator.trigger_benchmark()
+
         else:
             coordinator.run()

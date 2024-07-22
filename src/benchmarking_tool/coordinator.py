@@ -24,10 +24,10 @@ Classes:
 import datetime
 import time
 import uuid
+from itertools import product
 from typing import Any, NoReturn, Self
 
 import schedule
-from celery import chain, group
 from loguru import logger as l
 
 from .celery_app import run_benchmark, worker
@@ -89,27 +89,27 @@ class Coordinator:
     def __init__(self) -> None:
         pass
 
-    def trigger_benchmark(self) -> list:
+    def trigger_benchmark(self) -> None:
         trigger_time: datetime.datetime = datetime.datetime.now()
         wave_id: str = str(uuid.uuid4())
         l.info("Triggering Benchmark")
-        all_results: list = []
-        for filename in self.filenames:
-            groups: list = []
-            for worker_group in self.worker_groups:
-                workers: set[Any] = worker.get_workers(worker_group)
-                grouped_tasks = group(
+        for worker_group, filename in product(self.worker_groups, self.filenames):
+            workers: set[Any] = worker.get_workers(worker_group)
+            for worker_instance in workers:
+                queue_name = worker_instance.decode()
+                print(f"Queue: {queue_name}, Worker: {worker}, Filename: {filename}")
+                task = (
                     run_benchmark.s(
                         filename=filename, wave_id=wave_id, timestamp=trigger_time
-                    ).set(queue=worker.decode())
-                    for worker in workers
+                    )
+                    .set(queue=queue_name)
+                    .apply_async()
                 )
-                groups.append(grouped_tasks)
-
-            chained_tasks = chain(*groups)
-            result = chained_tasks.apply_async()
-            all_results.append(result)
-        return all_results
+                l.info(
+                    f"Created task for group {worker_group}, "
+                    + f"worker {worker_instance}, queue {queue_name}: {task}"
+                )
+                task.get()  # Wait until the task is done
 
     def run(self) -> NoReturn:
         self.__schedule_every_2_hours()
