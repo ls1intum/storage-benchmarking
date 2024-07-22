@@ -106,7 +106,9 @@ class Worker:
     def start_worker(self) -> None:
         if self.worker_id is None or self.worker_directory is None:
             raise ValueError("worker_id must be set before starting the worker")
-        self.app.worker_main(["worker", "--loglevel=info", "-E", "-Q", self.worker_id])
+        self.app.worker_main(
+            ["worker", "--loglevel=info", "-E", "-Q", self.worker_id, "--concurrency=1"]
+        )
         self.__del__()  # pylint: disable=unnecessary-dunder-call
 
     def __del__(self) -> None:
