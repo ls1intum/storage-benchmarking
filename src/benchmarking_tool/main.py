@@ -153,6 +153,11 @@ parser_coordinator.add_argument(
     help="Trigger a Job immediately and then exit. Useful for testing",
     action="store_true",
 )
+parser_coordinator.add_argument(
+    "--random",
+    help="Chooses a node from the group at random instead of running on all nodes",
+    action="store_true",
+)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -179,7 +184,7 @@ if __name__ == "__main__":
             Coordinator().set_worker_groups(args.groups).set_filenames(args.filenames)
         )
         if args.trigger:
-            coordinator.trigger_benchmark()
+            coordinator.trigger_benchmark(args.random)
 
         else:
-            coordinator.run()
+            coordinator.run(args.random)

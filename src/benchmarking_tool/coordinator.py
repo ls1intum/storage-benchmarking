@@ -22,6 +22,7 @@ Classes:
 """
 
 import datetime
+import random as r
 import time
 import uuid
 from itertools import product
@@ -69,7 +70,7 @@ class Coordinator:
             Retrieves the filename used in benchmark tasks.
     """
 
-    def __schedule_every_2_hours(self) -> None:
+    def __schedule_every_2_hours(self, random: bool = False) -> None:
         for t in [
             "00",
             "02",
@@ -84,17 +85,21 @@ class Coordinator:
             "20",
             "22",
         ]:
-            schedule.every().day.at(f"{t}:00").do(self.trigger_benchmark)
+            schedule.every().day.at(f"{t}:00").do(
+                lambda: self.trigger_benchmark(random)
+            )
 
     def __init__(self) -> None:
         pass
 
-    def trigger_benchmark(self) -> None:
+    def trigger_benchmark(self, random: bool = False) -> None:
         trigger_time: datetime.datetime = datetime.datetime.now()
         wave_id: str = str(uuid.uuid4())
         l.info("Triggering Benchmark")
         for worker_group, filename in product(self.worker_groups, self.filenames):
-            workers: set[Any] = worker.get_workers(worker_group)
+            workers: list[Any] = list(worker.get_workers(worker_group))
+            if random:  # Pick one element if we use random strategy
+                workers = [r.choice(workers)]
             for worker_instance in workers:
                 queue_name = worker_instance.decode()
                 task = (
@@ -110,8 +115,8 @@ class Coordinator:
                 )
                 task.get()  # Wait until the task is done
 
-    def run(self) -> NoReturn:
-        self.__schedule_every_2_hours()
+    def run(self, random: bool = False) -> NoReturn:
+        self.__schedule_every_2_hours(random)
         l.info("Coordinator Started")
         while True:
             schedule.run_pending()
