@@ -50,7 +50,7 @@ class FioResult:
 
     NO_RESULT_STRING = "---"
 
-    def __init__(self, result: dict) -> None:
+    def __init__(self, result: dict[Any, Any]) -> None:
         """
         Initialize the FioResult with the given result dictionary received from
         the FIO.run() method.
@@ -58,10 +58,10 @@ class FioResult:
         Args:
             result (dict): The raw FIO result.
         """
-        self.result: dict = result
+        self.result: dict[Any, Any] = result
 
     @staticmethod
-    def __humanize_bytes(value) -> str:
+    def __humanize_bytes(value: Any) -> str:
         """
         Convert a byte value to a human-readable string.
 
@@ -78,7 +78,7 @@ class FioResult:
         )
 
     @staticmethod
-    def __humanize_time_ns(value) -> str:
+    def __humanize_time_ns(value: Any) -> str:
         """
         Convert a time value in nanoseconds to a human-readable string.
 
@@ -97,7 +97,9 @@ class FioResult:
         )
 
     @staticmethod
-    def safe_get(d: dict, keys: list, default: str | float | int = "---") -> Any:
+    def safe_get(
+        d: dict[Any, Any], keys: list[str], default: str | float | int = "---"
+    ) -> Any:
         """
         Safely retrieve a value from a nested dictionary using a list of keys.
 
@@ -116,7 +118,7 @@ class FioResult:
         return d
 
     @staticmethod
-    def get_relevant_metrics(job: dict) -> dict[str, str]:
+    def get_relevant_metrics(job: dict[Any, Any]) -> dict[str, str]:
         """
         Extract and convert relevant metrics from a FIO job dictionary to a more
         readable format. This is the method that decides what will be printed in
@@ -156,7 +158,7 @@ class FioResult:
         }
         # fmt: on
 
-    def get_jobs(self) -> list[dict]:
+    def get_jobs(self) -> list[dict[Any, Any]]:
         """
         Get the list of jobs from the FIO result.
 
@@ -174,7 +176,7 @@ class FioResult:
         """
         return list(map(lambda x: x["jobname"], self.result["jobs"]))
 
-    def get_job(self, job: str) -> dict:
+    def get_job(self, job: str) -> dict[Any, Any]:
         """
         Retrieve details of a specific job by its name.
 
@@ -214,7 +216,9 @@ class FioResult:
         """
         table: list[list[str]] = []
         headers: list[str] = ["Metric"] + self.get_jobnames()
-        jobs: list[dict] = [self.get_relevant_metrics(job) for job in self.get_jobs()]
+        jobs: list[dict[Any, Any]] = [
+            self.get_relevant_metrics(job) for job in self.get_jobs()
+        ]
 
         for k, _ in self.get_relevant_metrics(self.get_jobs()[0]).items():
             row: list[str] = [k]
@@ -278,7 +282,7 @@ class FioConfig:
         self.config_file: str = config_file
         self.__parse_config()
 
-    def get_fd(self, mode="r") -> IO[Any]:
+    def get_fd(self, mode: str = "r") -> IO[Any]:
         """
         Get a file descriptor for the configuration file.
 
@@ -319,7 +323,7 @@ class FioConfig:
         """
         return self.get_section("global")
 
-    def get_section(self, section) -> list[tuple[str, str]]:
+    def get_section(self, section: str) -> list[tuple[str, str]]:
         """
         Get all items in a specific section of the configuration file.
 
@@ -332,7 +336,7 @@ class FioConfig:
         return self.config.items(section)
 
     @staticmethod
-    def search_tuple_list(arr, key) -> str | None:
+    def search_tuple_list(arr: list[tuple[str, str]], key: str) -> str | None:
         """
         Search for a key in a list of tuples and return its value.
 
@@ -348,7 +352,7 @@ class FioConfig:
                 return tup[1]
         return None
 
-    def get_config_value(self, section, key) -> str | None:
+    def get_config_value(self, section: str, key: str) -> str | None:
         """
         Get a configuration value from a specific section or the 'global'
         section.

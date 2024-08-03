@@ -29,6 +29,7 @@ from itertools import product
 from typing import Any, NoReturn, Self
 
 import schedule
+from celery.result import AsyncResult
 from loguru import logger as l
 
 from .celery_app import run_benchmark, worker
@@ -102,7 +103,7 @@ class Coordinator:
                 workers = [r.choice(workers)]
             for worker_instance in workers:
                 queue_name = worker_instance.decode()
-                task = (
+                task: AsyncResult[dict[Any, Any]] = (
                     run_benchmark.s(
                         filename=filename, wave_id=wave_id, timestamp=trigger_time
                     )

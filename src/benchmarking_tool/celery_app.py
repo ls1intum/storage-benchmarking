@@ -65,16 +65,18 @@ class Worker:
             Ensures the worker is unregistered from the Redis set upon object deletion.
     """
 
-    app: Celery
-
     def __init__(self) -> None:
         load_dotenv()
 
         self.redis_host: str | None = os.getenv("REDIS_HOST")
         self.redis_port: str | None = os.getenv("REDIS_PORT")
+
+        assert self.redis_host is not None
+        assert self.redis_port is not None
+
         self.redis_url: str = f"redis://{self.redis_host}:{self.redis_port}/0"
 
-        self.r = redis.Redis(host=self.redis_host, port=self.redis_port)
+        self.r = redis.Redis(host=self.redis_host, port=int(self.redis_port))
 
         self.worker_group: str | None = None
         self.worker_id: str | None = None
@@ -130,7 +132,7 @@ hostname: str = socket.gethostname()
 
 
 @worker.app.task(name="celery_app.run_benchmark")
-def run_benchmark(filename: str, wave_id: str, timestamp: datetime) -> dict:
+def run_benchmark(filename: str, wave_id: str, timestamp: datetime) -> dict[Any, Any]:
     fio = Fio()
     config: FioConfig = FioConfig(filename)
     res: FioResult = fio.run(config, worker.worker_directory or "/tmp")
