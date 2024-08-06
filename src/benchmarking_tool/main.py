@@ -158,6 +158,18 @@ parser_coordinator.add_argument(
     help="Chooses a node from the group at random instead of running on all nodes",
     action="store_true",
 )
+parser_coordinator.add_argument(
+    "--quick",
+    help="Schedule next benchmark directly after the previous one finished",
+    action="store_true",
+)
+parser_coordinator.add_argument(
+    "--runs",
+    help="Number of runs to make (used with the quick option)",
+    type=int,
+    required=False,
+    default=0,
+)
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -187,4 +199,4 @@ if __name__ == "__main__":
             coordinator.trigger_benchmark(args.random)
 
         else:
-            coordinator.run(args.random)
+            coordinator.run(args.random, args.quick)

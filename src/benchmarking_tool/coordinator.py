@@ -116,12 +116,19 @@ class Coordinator:
                 )
                 task.get()  # Wait until the task is done
 
-    def run(self, random: bool = False) -> NoReturn:
-        self.__schedule_every_2_hours(random)
+    def run(
+        self, random: bool = False, quick: bool = False, runs: int = 0
+    ) -> NoReturn | None:
         l.info("Coordinator Started")
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
+        if quick:
+            for _ in range(runs):
+                self.trigger_benchmark(random)
+        else:
+            self.__schedule_every_2_hours(random)
+            while True:
+                schedule.run_pending()
+                time.sleep(1)
+        return None
 
     def set_worker_groups(self, worker_groups: list[str]) -> Self:
         self.worker_groups: list[str] = worker_groups
