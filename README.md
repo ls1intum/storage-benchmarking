@@ -33,6 +33,9 @@ Constraints:
 - Users should be able to pull the Docker image from a public Docker repository.
 - The tool must include a Docker Compose file.
 
+## Architecture
+![Architecture of the Benchmarking Tool](images/architecture.png)
+
 ## Usage
 
 We provide the tool as a Docker image since we primarily intend to benchmark
@@ -132,6 +135,41 @@ that:
 ```sh
 docker run --rm -it -v /my-conf.ini:$(pwd)/my-conf.ini ghcr.io/ls1intum/storage-benchmarking run -d /tmp -c /my-conf.ini
 ```
+
+
+### Worker Coordinator Cluster
+For automatic distributed benchmarking over time we offer the setup of a worker
+coordinator cluster. In this setup we have a coordinator node that distributes
+tasks through a Redis Broker to a set of Worker Nodes.
+
+The worker coordinator deployment is shown here:
+
+![Deployment of the Worker Coordinator Cluster](images/deployment.png)
+
+Every worker boots with a hostname (or the default hostname) which must be
+unique and a group which is how workers are scheduled by the coordinator.
+
+When a worker boots, it registers itself to a Group of workers at the Redis
+instance and opens a queue to wait for jobs. It processes the jobs it receives
+sequentially and de-registers itself before shutting down.
+
+![Communication of a Worker Coordinator Cluster](images/sequence.png)
+
+The coordinator makes sure that only one group is actively running a benchmark.
+This is important if you try to measure different levels of abstraction for
+example raw disk performance, zfs performance and zvol performance in a virtual
+machine and want to make sure that your benchmarks don't influence one another.
+
+The coordinator can do a few different scheduling techniques. First you have to
+define groups using `--groups group1 group2 ...` which will be benchmarked in that
+order. By default, every node in the group will start a benchmark but if you
+only want a single random one to be picked in every iteration you can use the
+`--random` flag. You can also trigger a single benchmark directly by using the
+`--trigger` tag. If you don't want to schedule by the default time (every 2
+hours) you can use `--quick` which will directly start the next benchmarking
+round after the last group finished running the benchmarks, you can optionally
+limit the maximum number of runs from the quick run using `--limit <int>` after
+which the coordinator will exit.
 
 ## Installation
 To run the project locally clone it first:
