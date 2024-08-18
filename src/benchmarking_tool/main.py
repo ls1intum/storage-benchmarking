@@ -199,4 +199,4 @@ if __name__ == "__main__":
             coordinator.trigger_benchmark(args.random)
 
         else:
-            coordinator.run(args.random, args.quick)
+            coordinator.run(args.random, args.quick, args.runs)
