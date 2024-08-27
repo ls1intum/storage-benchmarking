@@ -124,7 +124,10 @@ class Worker:
     def delete_fio_files(self) -> None:
         r = glob.glob(f"{self.worker_directory}*")
         for i in r:
-            os.remove(i)
+            try:
+                os.remove(i)
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass  # Ignore files that cant be deleted
 
     def __del__(self) -> None:
         if self.worker_group is not None and self.worker_id is not None:
