@@ -123,6 +123,9 @@ parser_worker.add_argument(
     type=str,
     required=True,
 )
+parser_worker.add_argument(
+    "--delete", help="Delete files after benchmark", action="store_true"
+)
 
 ################################################################################
 # Coordinator Parameters
@@ -189,7 +192,9 @@ if __name__ == "__main__":
     if args.role == "worker":
         if args.hostname is None:
             args.hostname = hostname
-        worker.register_worker(args.group, args.hostname, args.directory).start_worker()
+        worker.register_worker(
+            args.group, args.hostname, args.directory, args.delete
+        ).start_worker()
 
     if args.role == "coordinator":
         coordinator = (

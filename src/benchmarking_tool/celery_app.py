@@ -21,6 +21,7 @@ Classes:
             registration, initialization, and task execution.
 """
 
+import glob
 import os
 import socket
 from datetime import datetime
@@ -81,6 +82,7 @@ class Worker:
         self.worker_group: str | None = None
         self.worker_id: str | None = None
         self.worker_directory: str | None = None
+        self.delete: bool | None = None
 
         self.app: Celery = Celery(
             "fio",
@@ -94,11 +96,16 @@ class Worker:
         )
 
     def register_worker(
-        self, worker_group: str, worker_id: str, worker_directory: str
+        self,
+        worker_group: str,
+        worker_id: str,
+        worker_directory: str,
+        delete: bool = True,
     ) -> Self:
         self.worker_id = worker_id
         self.worker_group = worker_group
         self.worker_directory = worker_directory
+        self.delete = delete
 
         self.r.sadd(f"workers_{self.worker_group}", self.worker_id)
 
@@ -113,6 +120,11 @@ class Worker:
             ["worker", "--loglevel=info", "-E", "-Q", self.worker_id, "--concurrency=1"]
         )
         self.__del__()  # pylint: disable=unnecessary-dunder-call
+
+    def delete_fio_files(self) -> None:
+        r = glob.glob(f"{self.worker_directory}*")
+        for i in r:
+            os.remove(i)
 
     def __del__(self) -> None:
         if self.worker_group is not None and self.worker_id is not None:
@@ -136,6 +148,8 @@ def run_benchmark(filename: str, wave_id: str, timestamp: datetime) -> dict[Any,
     fio = Fio()
     config: FioConfig = FioConfig(filename)
     res: FioResult = fio.run(config, worker.worker_directory or "/tmp")
+    if worker.delete:
+        worker.delete_fio_files()
     return {
         "status": "Passed",
         "worker_id": worker.worker_id,
